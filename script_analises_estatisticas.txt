@@ -1,0 +1,385 @@
+# autora: Paula Montagnana
+# 07 11 2023
+# Atualizado em 22/11/2023
+# Dados Innocent Drinks - UFSCar
+
+# pacotes
+library(vioplot)
+library(ggplot2)
+library(ggpubr)
+
+
+# Análise exploratória riqueza e abundância de polinizadores por distância
+
+setwd("")
+
+# Análise dos polinizadores em relação à distância da veg. nativa
+
+dados<-read.table("pollinator_riq_abund.txt",sep="\t",dec=".",head=T)
+apis<-read.table("apis_mellifera.txt",sep="\t",dec=".",head=T)
+
+# a variável 'distances' é categórica, mas o R lê como numérica. Transformando...
+dados$distances<-as.character(as.numeric(dados$distances))
+
+# Boxplot
+# 'varwidth = T' ensures that the width of each boxplot is proportional to the sample 
+# size per level.
+
+boxplot(pollinator_sp ~ factor(distances),
+        varwidth = TRUE, xlab = "Distances",
+        main = "Boxplot of pollinator species richness",
+        ylab = "Pollinator species richness", data = dados,
+        col= "#ffb38a")
+
+boxplot(pollinator_abund ~ factor(distances),
+        varwidth = TRUE, xlab = "Distances",
+        main = "Boxplot of pollinator abundance",
+        ylab = "Pollinator abundance", data = dados,
+        col= "#ff6700")
+
+
+# Violin plots
+# Violin plots are used when you want to observe the distribution of numeric data,
+# and are especially useful when you want to make a comparison of distributions 
+# between multiple groups. The peaks, valleys, and tails of each group's density curve
+# can be compared to see where groups are similar or different.
+
+# Riqueza de espécies de polinizadores
+
+tiff("Fig_riqueza_polinizadores_distância.tif",res=1200,units="mm",width=119,height=90)
+riq.pol<-ggviolin(dados, x = "distances", y = "pollinator_sp", fill = "distances", xlab = "Distances (m)",
+        ylab = "Pollinator species richness",
+        palette = c("#ff6700","#fb7216","#ff8532","#fd8f45","#ffa162"),
+        order = c("0","100","200","300","400"),
+        add = "boxplot", add.params = list(fill = "white"))+
+        stat_compare_means(method = "kruskal.test", label.y = 13)
+riq.pol
+dev.off()
+
+# Abundância de polinizadores
+
+tiff("Fig_abund_polinizadores_distância.tif",res=1200,units="mm",width=119,height=90)
+abund.pol<-ggviolin(dados, x = "distances", y = "pollinator_abund", fill = "distances", xlab = "Distances",
+         ylab = "Pollinator abundance",
+         palette = c("#ff6700","#fb7216","#ff8532","#fd8f45","#ffa162"),
+         order = c("0","100","200","300","400"),
+         add = "boxplot", add.params = list(fill = "white"))+
+         stat_compare_means(method = "kruskal.test", label.y = 530)
+abund.pol
+dev.off()
+
+# Para Apis mellifera
+
+ggviolin(apis, x = "distances", y = "apis_mellifera", fill = "distances", xlab = "Distances",
+         ylab = "Apis mellifera abundance",
+         palette = c("#ff6700","#fb7216","#ff8532","#fd8f45","#ffa162"),
+         order = c("0","100","200","300","400"),
+         add = "boxplot", add.params = list(fill = "white"))
+
+## Testar normalidade dos dados
+# Shapiro-Wilk
+# O p-valor for < 0.05 indica que os dados não apresentam normalidade.
+
+# riqueza de polinizadores
+shapiro.test(dados$pollinator_sp)
+
+# W = 0.89095, p-value = 0.0005013 # dados não são normais
+
+# abundância de polinizadors
+shapiro.test(dados$pollinator_abund)
+
+# W = 0.64898, p-value = 4.025e-09 # dados não são normais
+
+# Estatística não-paramétrica
+# Kruskal-Wallis
+
+levels(dados$distances)
+
+dados$distances <- ordered(dados$distances,
+                      levels = c("0", "100", "200", "300", "400"))
+
+# riqueza de polinizadores
+kruskal.test(pollinator_sp ~ distances, data = dados)
+
+# Kruskal-Wallis chi-squared = 15.212, df = 4, p-value = 0.004281
+# Podemos concluir que há diferenças significativas entre as diferentes distâncias da veg. nativa,
+# porque o valor de p<0.05
+
+# abundância de polinizadores
+kruskal.test(pollinator_abund ~ distances, data = dados)
+
+# Kruskal-Wallis chi-squared = 3.2051, df = 4, p-value = 0.5241
+# não há diferenças significativas de abundância entre as distâncias de veg. nativa
+
+# We know there is a substantial difference between groups based on the Kruskal-Wallis test’s results, 
+# but we don’t know which pairings of groups are different.
+
+# The function pairwise.wilcox.test() can be used to calculate pairwise comparisons between group levels with
+# different testing corrections
+
+# riqueza de polinizadores
+pairwise.wilcox.test(dados$pollinator_sp, dados$distances,
+                     p.adjust.method = "BH")
+
+#---------------------------------------
+# Análise para pragas e inimigos naturais em relação à distância da veg nativa
+
+pragas.ne<-read.table("pest_ne_no_flower.txt",sep="\t",dec=".",head=T)
+
+
+# a variável 'distances' é categórica, mas o R lê como numérica. Transformando...
+pragas.ne$distances<-as.character(as.numeric(pragas.ne$distances))
+
+## Testar normalidade dos dados
+# Shapiro-Wilk
+# O p-valor for < 0.05 indica que os dados não apresentam normalidade.
+
+# Riqueza de espécies de pragas
+shapiro.test(pragas.ne$pest_sp_no_flower)
+
+# Abundância de pragas
+shapiro.test(pragas.ne$pest_abund_no.flower)
+
+# Riqueza de espécies de inimigos naturais
+shapiro.test(pragas.ne$ne_sp_no_flower)
+
+# Abundância de inimigos naturais
+shapiro.test(pragas.ne$ne_abund_no_flower)
+
+# Estatística não-paramétrica
+# Kruskal-Wallis
+
+# Riqueza de espécies de pragas
+
+kruskal.test(pest_sp_no_flower ~ distances, data = pragas.ne)
+
+tiff("Fig_riq_pragas_distância.tif",res=1200,units="mm",width=119,height=90)
+riq.pragas<-ggviolin(pragas.ne, x = "distances", y = "pest_sp_no_flower", fill = "distances", xlab = "Distances",
+                    ylab = "Pest species richness",
+                    palette = c("#009688","#35a79c","#54b2a9","#65c3ba","#83d0c9"),
+                    order = c("0","100","200","300","400"),
+                    add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(method = "kruskal.test", label.y = 22)
+riq.pragas
+dev.off()
+
+# Abundância de pragas
+
+kruskal.test(pest_abund_no.flower ~ distances, data = pragas.ne)
+
+tiff("Fig_abund_pragas_distância.tif",res=1200,units="mm",width=119,height=90)
+abund.pragas<-ggviolin(pragas.ne, x = "distances", y = "pest_abund_no.flower", fill = "distances", xlab = "Distances",
+                     ylab = "Pest abundance",
+                     palette = c("#009688","#35a79c","#54b2a9","#65c3ba","#83d0c9"),
+                     order = c("0","100","200","300","400"),
+                     add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(method = "kruskal.test", label.y = 700)
+abund.pragas
+dev.off()
+
+# Riqueza de espécies de inimigos naturais
+
+kruskal.test(ne_sp_no_flower ~ distances, data = pragas.ne)
+
+tiff("Fig_riq_inimigos_distância.tif",res=1200,units="mm",width=119,height=90)
+riq.in<-ggviolin(pragas.ne, x = "distances", y = "ne_sp_no_flower", fill = "distances", xlab = "Distances",
+                       ylab = "Natural enemy species richness",
+                       palette = c("#005073","#107dac","#189ad3","#1ebbd7","#71c7ec"),
+                       order = c("0","100","200","300","400"),
+                       add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(method = "kruskal.test", label.y = 20)
+riq.in
+dev.off()
+
+# Abundância de inimigos naturais
+
+kruskal.test(ne_abund_no_flower ~ distances, data = pragas.ne)
+
+tiff("Fig_abund_inimigos_distância.tif",res=1200,units="mm",width=119,height=90)
+abund.in<-ggviolin(pragas.ne, x = "distances", y = "ne_abund_no_flower", fill = "distances", xlab = "Distances",
+                 ylab = "Natural enemy abundance",
+                 palette = c("#005073","#107dac","#189ad3","#1ebbd7","#71c7ec"),
+                 order = c("0","100","200","300","400"),
+                 add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(method = "kruskal.test", label.y = 140)
+abund.in
+dev.off()
+
+# Formação de frutos
+
+frutos<-read.table("fruit_set.txt",sep="\t",dec=".",head=T)
+
+# a variável 'distances' é categórica, mas o R lê como numérica. Transformando...
+frutos$distances<-as.character(as.numeric(frutos$distances))
+
+## Testar normalidade dos dados
+# Shapiro-Wilk
+# O p-valor for < 0.05 indica que os dados não apresentam normalidade.
+
+# formação de frutos total (número de frutos formados)
+shapiro.test(frutos$fruit_set)
+
+kruskal.test(fruit_set ~ distances, data = frutos)
+
+tiff("Fig_fruit_set_distância.tif",res=1200,units="mm",width=119,height=90)
+fruit.set<-ggviolin(frutos, x = "distances", y = "fruit_set", fill = "distances", xlab = "Distances",
+                   ylab = "Fruit set",
+                   palette = c("#bba8ff","#c6b7fe","#cdc2f5","#d5cdf3","#e6e1f9"),
+                   order = c("0","100","200","300","400"),
+                   add = "boxplot", add.params = list(fill = "white"))+
+  stat_compare_means(method = "kruskal.test", label.y = 41)
+fruit.set
+dev.off()
+
+# porcentagem de formação de frutos por teste de polinização
+
+frutos2<-read.table("fruit_set_porcentagem.txt",sep="\t",dec=".",head=T)
+
+# Polinização aberta
+shapiro.test(frutos2$por_fr_open_pollination)
+
+kruskal.test(por_fr_open_pollination ~ distances, data = frutos2)
+
+# Exclusão de polinizador
+shapiro.test(frutos2$por_fr_pollin_exclusion)
+
+kruskal.test(por_fr_pollin_exclusion ~ distances, data = frutos2)
+
+# Suplementação de polinização
+
+shapiro.test(frutos2$por_fr_supplem_pollination)
+
+kruskal.test(por_fr_supplem_pollination ~ distances, data = frutos2)
+
+#---------------------------------------------------------------------
+# Boxplot do ggpubr
+
+# Riqueza de espécies de polinizadores
+
+tiff("Fig_riqueza_polinizadores_distância.tif",res=1200,units="mm",width=180,height=100)
+riq.pol<-ggboxplot(dados, x = "distances", y = "pollinator_sp", fill = "distances", xlab = "Distances (m)",
+                   ylab = "Pollinator species richness",
+                   palette = c("#ff6700","#fb7216","#ff8532","#fd8f45","#ffa162"),
+                   order = c("0","100","200","300","400"),
+                   add = "boxplot", legend = "")+
+  stat_compare_means(method = "kruskal.test", label.y = 11)
+riq.pol
+dev.off()
+
+# Abundância de polinizadores
+
+tiff("Fig_abund_polinizadores_distância.tif",res=1200,units="mm",width=180,height=100)
+abund.pol<-ggboxplot(dados, x = "distances", y = "pollinator_abund", fill = "distances", xlab = "Distances (m)",
+                     ylab = "Pollinator abundance",
+                     palette = c("#ff6700","#fb7216","#ff8532","#fd8f45","#ffa162"),
+                     order = c("0","100","200","300","400"),
+                     add = "boxplot", legend = "")+
+  stat_compare_means(method = "kruskal.test", label.y = 470)
+abund.pol
+dev.off()
+
+# Riqueza de espécies de pragas
+
+tiff("Fig_riq_pragas_distância.tif",res=1200,units="mm",width=180,height=100)
+riq.pragas<-ggboxplot(pragas.ne, x = "distances", y = "pest_sp_no_flower", fill = "distances", 
+                     xlab = "Distances (m)",
+                     ylab = "Pest species richness",
+                     palette = c("#009688","#35a79c","#54b2a9","#65c3ba","#83d0c9"),
+                     order = c("0","100","200","300","400"),
+                     add = "boxplot", legend = "")+
+  stat_compare_means(method = "kruskal.test", label.y = 20)
+riq.pragas
+dev.off()
+
+# Abundância de pragas
+
+tiff("Fig_abund_pragas_distância.tif",res=1200,units="mm",width=180,height=100)
+abund.pragas<-ggboxplot(pragas.ne, x = "distances", y = "pest_abund_no.flower", 
+                       fill = "distances", xlab = "Distances (m)",
+                       ylab = "Pest abundance",
+                       palette = c("#009688","#35a79c","#54b2a9","#65c3ba","#83d0c9"),
+                       order = c("0","100","200","300","400"),
+                       add = "boxplot", legend = "")+
+  stat_compare_means(method = "kruskal.test", label.y = 500)
+abund.pragas
+dev.off()
+
+# Riqueza de espécies de inimigos naturais
+
+tiff("Fig_riq_inimigos_distância.tif",res=1200,units="mm",width=180,height=100)
+riq.in<-ggboxplot(pragas.ne, x = "distances", y = "ne_sp_no_flower", fill = "distances", 
+                 xlab = "Distances (m)",
+                 ylab = "Natural enemy species richness",
+                 palette = c("#005073","#107dac","#189ad3","#1ebbd7","#71c7ec"),
+                 order = c("0","100","200","300","400"),
+                 add = "boxplot", legend = "")+
+  stat_compare_means(method = "kruskal.test", label.y = 14)
+riq.in
+dev.off()
+
+# Abundância de inimigos naturais
+
+tiff("Fig_abund_inimigos_distância.tif",res=1200,units="mm",width=180,height=100)
+abund.in<-ggboxplot(pragas.ne, x = "distances", y = "ne_abund_no_flower", 
+                   fill = "distances", xlab = "Distances (m)",
+                   ylab = "Natural enemy abundance",
+                   palette = c("#005073","#107dac","#189ad3","#1ebbd7","#71c7ec"),
+                   order = c("0","100","200","300","400"),
+                   add = "boxplot", legend = "")+
+  stat_compare_means(method = "kruskal.test", label.y = 140)
+abund.in
+dev.off()
+
+# Formação de frutos
+
+tiff("Fig_fruit_set_distância.tif",res=1200,units="mm",width=180,height=100)
+fruit.set<-ggboxplot(frutos, x = "distances", y = "fruit_set", fill = "distances", 
+                    xlab = "Distances (m)",
+                    ylab = "Fruit set",
+                    palette = c("#bba8ff","#c6b7fe","#cdc2f5","#d5cdf3","#e6e1f9"),
+                    order = c("0","100","200","300","400"),
+                    add = "boxplot", legend = "")+
+  stat_compare_means(method = "kruskal.test", label.y = 30)
+fruit.set
+dev.off()
+
+# Porcentagem de formação de frutos por teste de polinização e distância
+
+# Polinização aberta
+
+tiff("Fig_open_distância.tif",res=1200,units="mm",width=180,height=100)
+open<-ggboxplot(frutos2, x = "distances", y = "por_fr_open_pollination", fill = "distances", 
+                     xlab = "Distances (m)",
+                     ylab = "Fruit set by Open pollination (%)",
+                     palette = c("#f0c200","#ffce00","#ffda39","#ffe36d","#ffeda1"),
+                     order = c("0","100","200","300","400"),
+                     add = "boxplot", legend = "")+
+  stat_compare_means(method = "kruskal.test", label.y = 45)
+open
+dev.off()
+
+# Exclusão de polinizadores
+
+tiff("Fig_exclusion_distância.tif",res=1200,units="mm",width=180,height=100)
+exclu<-ggboxplot(frutos2, x = "distances", y = "por_fr_pollin_exclusion", fill = "distances", 
+                xlab = "Distances (m)",
+                ylab = "Fruit set by Pollinator exclusion (%)",
+                palette = c("#f0c200","#ffce00","#ffda39","#ffe36d","#ffeda1"),
+                order = c("0","100","200","300","400"),
+                add = "boxplot", legend = "")+
+  stat_compare_means(method = "kruskal.test", label.y = 22)
+exclu
+dev.off()
+
+# Suplementação de pólen
+
+tiff("Fig_suplementação_distância.tif",res=1200,units="mm",width=180,height=100)
+suple<-ggboxplot(frutos2, x = "distances", y = "por_fr_supplem_pollination", fill = "distances", 
+                 xlab = "Distances (m)",
+                 ylab = "Fruit set by Supplementary pollination (%)",
+                 palette = c("#f0c200","#ffce00","#ffda39","#ffe36d","#ffeda1"),
+                 order = c("0","100","200","300","400"),
+                 add = "boxplot", legend = "")+
+  stat_compare_means(method = "kruskal.test", label.y = 50)
+suple
+dev.off()

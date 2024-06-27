@@ -1,0 +1,261 @@
+## Métricas de paisagem
+## Recortar Raster
+## Innocent Drinks 
+## 06/02/2023
+
+# memoria
+rm(list = ls())
+
+# carregar pacotes
+library(sf)
+library(raster)
+library(rgdal)
+library(fasterize)
+library(landscapetools)
+library(landscapemetrics)
+library(tmap)
+library(ggspatial)
+library(patchwork)
+library(broom)
+library(bbmle)
+library(tidyverse)
+
+# mudar diretorio
+setwd("")
+
+# criar diretorios de saida
+dir.create("mapas")
+dir.create("metricas_lista")
+dir.create("metricas_raster")
+dir.create("metricas_tabelas")
+dir.create("modelos")
+dir.create("raster")
+dir.create("vector")
+
+## importar shapefile----
+
+alt.I <- sf::st_read("Altinopolis_I.shp", quiet = TRUE)
+alt.II<- sf::st_read("Altinopolis_II.shp", quiet = TRUE)
+caj.I<- sf::st_read("Cajobi_I.shp", quiet = TRUE)
+caj.II<- sf::st_read("Cajobi_II.shp", quiet = TRUE)
+est.I<- sf::st_read("estiva_i_buffer_750.shp", quiet = TRUE)
+est.III<- sf::st_read("estiva_iii_buffer_750.shp", quiet = TRUE)
+est.II<- sf::st_read("Estiva_Gerbi_II.shp", quiet = TRUE)
+sc1.I<- sf::st_read("SCRP1_I.shp", quiet = TRUE)
+sc1.II<- sf::st_read("SCRP1_II.shp", quiet = TRUE)
+sc2.I<- sf::st_read("SCRP2_I.shp", quiet = TRUE)
+sc2.II<- sf::st_read("SCRP2_II.shp", quiet = TRUE)
+taq.I<- sf::st_read("Taquaritinga_I.shp", quiet = TRUE)
+taq.II<- sf::st_read("Taquaritinga_II.shp", quiet = TRUE)
+
+# rasterizar --------------------------------------------------------------
+
+# Altinópolis
+
+## criar um raster vazio
+alt.I.ra <- fasterize::raster(alt.I, res = 5)
+alt.I.ra
+
+# rasterizar
+alt.I.r <- fasterize::fasterize(sf = alt.I, raster = alt.I.ra, field = "classe")
+alt.I.r
+
+alt.II.ra <- fasterize::raster(alt.II, res = 5)
+alt.II.ra
+alt.II.r <- fasterize::fasterize(sf = alt.II, raster = alt.II.ra, field = "Classe")
+alt.II.r
+
+# Cajobi
+
+caj.I.ra <- fasterize::raster(caj.I, res = 5)
+caj.I.ra
+caj.I.r <- fasterize::fasterize(sf = caj.I, raster = caj.I.ra, field = "classe")
+caj.I.r
+
+caj.II.ra <- fasterize::raster(caj.II, res = 5)
+caj.II.ra
+caj.II.r <- fasterize::fasterize(sf = caj.II, raster = caj.II.ra, field = "classe")
+caj.II.r
+
+# Estiva Gerbi
+
+est.I.ra <- fasterize::raster(est.I, res = 5)
+est.I.ra
+est.I.r <- fasterize::fasterize(sf = est.I, raster = est.I.ra, field = "classe")
+est.I.r
+
+est.III.ra <- fasterize::raster(est.III, res = 5)
+est.III.ra
+est.III.r <- fasterize::fasterize(sf = est.III, raster = est.III.ra, field = "classe")
+est.III.r
+
+est.II.ra <- fasterize::raster(est.II, res = 5)
+est.II.ra
+est.II.r <- fasterize::fasterize(sf = est.II, raster = est.II.ra, field = "classe")
+est.II.r
+
+# SCRP 1
+
+sc1.I.ra <- fasterize::raster(sc1.I, res = 5)
+sc1.I.ra
+sc1.I.r <- fasterize::fasterize(sf = sc1.I, raster = sc1.I.ra, field = "classe")
+sc1.I.r
+
+sc1.II.ra <- fasterize::raster(sc1.II, res = 5)
+sc1.II.ra
+sc1.II.r <- fasterize::fasterize(sf = sc1.II, raster = sc1.II.ra, field = "classe")
+sc1.II.r
+
+# SCRP 2
+
+sc2.I.ra <- fasterize::raster(sc2.I, res = 5)
+sc2.I.ra
+sc2.I.r <- fasterize::fasterize(sf = sc2.I, raster = sc2.I.ra, field = "classe")
+sc2.I.r
+
+sc2.II.ra <- fasterize::raster(sc2.II, res = 5)
+sc2.II.ra
+sc2.II.r <- fasterize::fasterize(sf = sc2.II, raster = sc2.II.ra, field = "classe")
+sc2.II.r
+
+# Taquaritinga
+
+taq.I.ra <- fasterize::raster(taq.I, res = 5)
+taq.I.ra
+taq.I.r <- fasterize::fasterize(sf = taq.I, raster = taq.I.ra, field = "classe")
+taq.I.r
+
+taq.II.ra <- fasterize::raster(taq.II, res = 5)
+taq.II.ra
+taq.II.r <- fasterize::fasterize(sf = taq.II, raster = taq.II.ra, field = "classe")
+taq.II.r
+
+# # importar raster -----------------------------------------------------------
+# scrp1 <- raster::raster("./raster/scrp1_1km_utm.tif")
+# scrp1
+# 
+# scrp2 <- raster::raster("./raster/scrp2_1km_utm.tif")
+# scrp2
+# 
+# altinopolis <- raster::raster("./raster/altinopolis_1km_utm.tif")
+# altinopolis
+# 
+# cajobi <- raster::raster("./raster/cajobi_1km_utm.tif")
+# cajobi
+# 
+# estiva1 <- raster::raster("./raster/estiva1_1km_utm.tif")
+# estiva1
+# 
+# estiva2 <- raster::raster("./raster/estiva2_1km_utm.tif")
+# estiva2
+# 
+# taqua <- raster::raster("./raster/taquaritinga_1km_utm.tif")
+# taqua
+
+#--------------------------------------------------------------------------------
+
+# Santa Cruz do Rio Pardo 1 Mata Atlântica
+
+# # checar os raster --------------------------------------------------------
+landscapemetrics::check_landscape(sc1.I.r)
+landscapemetrics::check_landscape(sc1.II.r)
+
+# calcular as metricas ----------------------------------------------------
+# class level
+pland.sc1.I <- landscapemetrics::lsm_c_pland(landscape = sc1.I.r, directions = 8)
+pland.sc1.I
+
+pland.sc1.II <- landscapemetrics::lsm_c_pland(landscape = sc1.II.r, directions = 8)
+pland.sc1.II
+
+# export tabelas com as métricas
+# readr::write_csv(pland.sc1, "./metricas_tabelas/metrica_pland_scrp1_1km.csv")
+
+# Santa Cruz do Rio Pardo 2 Cerrado
+
+# # checar os raster --------------------------------------------------------
+landscapemetrics::check_landscape(sc2.I.r)
+landscapemetrics::check_landscape(sc2.II.r)
+
+# calcular as metricas ----------------------------------------------------
+# class level
+pland.sc2.I <- landscapemetrics::lsm_c_pland(landscape = sc2.I.r, directions = 8)
+pland.sc2.I
+
+pland.sc2.II <- landscapemetrics::lsm_c_pland(landscape = sc2.II.r, directions = 8)
+pland.sc2.II
+
+# export tabelas com as métricas
+readr::write_csv(pland.sc2, "./metricas_tabelas/metrica_pland_scrp2_1km.csv")
+
+# Altinópolis
+
+# # checar os raster --------------------------------------------------------
+landscapemetrics::check_landscape(alt.I.r)
+landscapemetrics::check_landscape(alt.II.r)
+
+# calcular as metricas ----------------------------------------------------
+# class level
+pland.alti.I <- landscapemetrics::lsm_c_pland(landscape = alt.I.r, directions = 8)
+pland.alti.I
+
+pland.alti.II <- landscapemetrics::lsm_c_pland(landscape = alt.II.r, directions = 8)
+pland.alti.II
+
+# export tabelas com as métricas
+readr::write_csv(alti, "./metricas_tabelas/metrica_pland_altinopolis_1km.csv")
+
+# Cajobi
+
+# # checar os raster --------------------------------------------------------
+landscapemetrics::check_landscape(caj.I.r)
+landscapemetrics::check_landscape(caj.II.r)
+
+# calcular as metricas ----------------------------------------------------
+# class level
+pland.caj.I <- landscapemetrics::lsm_c_pland(landscape = caj.I.r, directions = 8)
+pland.caj.I
+
+pland.caj.II <- landscapemetrics::lsm_c_pland(landscape = caj.II.r, directions = 8)
+pland.caj.II
+
+# export tabelas com as métricas
+readr::write_csv(cajobi, "./metricas_tabelas/metrica_pland_cajobi_1km.csv")
+
+# Estiva Gerbi 
+
+# # checar os raster --------------------------------------------------------
+landscapemetrics::check_landscape(est.I.r)
+landscapemetrics::check_landscape(est.III.r)
+landscapemetrics::check_landscape(est.II.r)
+
+# calcular as metricas ----------------------------------------------------
+# class level
+pland.est.I <- landscapemetrics::lsm_c_pland(landscape = est.I.r, directions = 8)
+pland.est.I
+
+pland.est.III <- landscapemetrics::lsm_c_pland(landscape = est.III.r, directions = 8)
+pland.est.III
+
+pland.est.II <- landscapemetrics::lsm_c_pland(landscape = est.II.r, directions = 8)
+pland.est.II
+
+# export tabelas com as métricas
+readr::write_csv(estiva2, "./metricas_tabelas/metrica_pland_estiva2_1km.csv")
+
+# Taquaritinga
+
+# # checar os raster --------------------------------------------------------
+landscapemetrics::check_landscape(taq.I.r)
+landscapemetrics::check_landscape(taq.II.r)
+
+# calcular as metricas ----------------------------------------------------
+# class level
+pland.taq.I <- landscapemetrics::lsm_c_pland(landscape = taq.I.r, directions = 8)
+pland.taq.I
+
+pland.taq.II <- landscapemetrics::lsm_c_pland(landscape = taq.II.r, directions = 8)
+pland.taq.II
+
+# export tabelas com as métricas
+readr::write_csv(taqua, "./metricas_tabelas/metrica_pland_taquaritinga_1km.csv")
